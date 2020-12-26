@@ -11,7 +11,8 @@ plt.show()
 total_distance =0  #质心距离和
 last_total_distance=0 #上次的质心距离和
 total_distance_difference=0   # 质心距离差
-K=4  # 将给定数据集构建一个包含K个随机质心的数组           
+K=4  # 将给定数据集构建一个包含K个随机质心的数组   
+E = 0.001       
 tempclass=np.zeros(data.shape[0]) #获得第0列的维度(行数)定义一个数组-- 80行
 np.random.shuffle(data)#打乱数据集 这里打乱的原因就是防止我原始的数据如果按照顺序排序，需要进行多次迭代
 centerArray=np.array(data[0:K])   # 质心为centre  质心是自己指定的取出前k个点作为质心
@@ -61,9 +62,18 @@ def kmeans(centerArray,num):
     
     print('质心距离和差值：',total_distance_difference)   
                 
+# for i  in range(10):
+#         print("i = %d" % i)
+#         kmeans(centerArray,data.shape[0]) 
+
+kmeans(centerArray,data.shape[0]) 
 for i  in range(10):
-    print("i = %d" % i)
-    kmeans(centerArray,data.shape[0]) #传递质心，数据的个数
+        if total_distance_difference > E :
+            print("i = %d" % i)
+            kmeans(centerArray,data.shape[0])   #传递质心，数据的个数
+        
+    
+   
     
     
     
