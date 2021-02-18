@@ -7,6 +7,76 @@ package sort;
  * 你懂吧，真正产生突破的阶段都不会太容易的！
  */
 public class Sort {
+    /**
+     * 归并排序
+     * 向下分治 然后向上整合
+     * 1.把数组平均分成两份，分别对左右两个区间进行相同处理(归并排序)，直到区间的个数（size =0 /1）
+     * 2.合并左右两个有序数组--（通过额外的数组辅助）
+     * 还是设计到把数组划分成区间，使用下标的方式
+     *
+     * 相比较快排来说，区间的方式是左闭右开
+     *
+     *
+     * 时间复杂度:
+     * 划分的时间复杂度 o(log n)
+     * 合并的时间复杂度 o(n)
+     * 没有最好最坏 o(n log n)
+     * 空间复杂度: 每一层都需要额外的数组 o(n) + 额外的调用栈 o (log n)
+     * 但实际上是 取系数大的 o(n)
+     * 具有稳定性 左边一个数，右边一个数字，当两个数字相等的时候，确定是对左边的数字进行选择
+     */
+    public static void mergeSort(int[] arr){
+        mergeSortInternal(arr,0,arr.length);
+    }
+
+    private static void mergeSortInternal(int[] arr, int lowIndex, int highIndex) {
+        int size = highIndex-lowIndex;
+        if(size <= 1)return;
+        int middleIndex = (lowIndex+highIndex)/2;
+        //左区间 [0 - middleIndex)
+        //右区间 [middleIndex - highIndex)
+        mergeSortInternal(arr,lowIndex,middleIndex);;
+        mergeSortInternal(arr,middleIndex,highIndex);
+
+        //左右两个区间都有序了，开始进行合并
+        merge(arr,lowIndex,middleIndex,highIndex);
+    }
+
+    //合并两个有序的数组
+    //需要一个额外的数组作为辅助的空间
+    private static void merge(int[] arr, int lowIndex, int middleIndex, int highIndex) {
+        int size = highIndex-lowIndex;
+        int[] extra = new int[size];
+        int leftIndex = lowIndex;
+        int rightIndex = middleIndex;
+        int extraIndex = 0;
+        while (leftIndex < middleIndex && rightIndex < highIndex){
+            if(arr[leftIndex] <= arr[rightIndex]){ //保证稳定性
+                extra[extraIndex++] = arr[leftIndex];
+                leftIndex++;
+            }
+            if(arr[leftIndex] > arr[rightIndex]){
+                extra[extraIndex++] = arr[rightIndex];
+                rightIndex++;
+            }
+        }
+        //谁没有走完就全部搬进来
+        while (leftIndex < middleIndex){
+            extra[extraIndex++] = arr[leftIndex];
+            leftIndex++;
+        }
+        while (rightIndex < highIndex){
+            extra[extraIndex++] = arr[rightIndex];
+            rightIndex++;
+        }
+//        //最后把数据在搬回去
+//        for(int i =0 ; i< size;i++){
+//            arr[i+lowIndex] = extra[i];
+//        }
+
+        //
+        System.arraycopy(extra,0, arr,lowIndex,size);
+    }
 
     /**
      * 快速排序
@@ -19,12 +89,26 @@ public class Sort {
      * [lowIndex ,highIndex-1]
      * [highIndex,arr.length-1]
      *
+     * partition的方式：常用的是挖坑方法
+     * 性能分析
+     * 时间复杂度
+     * 对区间做partition 的过程时间复杂度是o(n) 这个过程其实本质上是遍历一遍数据
+     * 那么一共需要对多少个区间进行操作  
+     *
+     * 最好
+     * 最坏
+     * 平均
+     *
+     *
+     * 空间复杂度
+     *
+     * 稳定性：不具备稳定性 5933
+     *
      */
 
     public static void quickSort(int[] arr){
         //第一次代表需要对所有区间进行排序
         quickSortInternal(arr,0,arr.length-1);
-
     }
 
     private static void quickSortInternal(int[] arr, int lowIndex, int highIndex) {
@@ -34,7 +118,7 @@ public class Sort {
         if(size <= 1) return;
 
         //遍历进行partition  返回keyIndex 经过partition之后最终所在的下标
-        int keyIndex = partitionHover(arr,lowIndex,highIndex);
+        int keyIndex = partition快慢(arr,lowIndex,highIndex);
         //分别对左右区间进行相同的处理过程-- 递归方法
         quickSortInternal(arr,lowIndex,keyIndex-1);
         quickSortInternal(arr,keyIndex+1,highIndex);
@@ -83,15 +167,49 @@ public class Sort {
 
     /**
      * 第二种方法：挖坑方法
+     * 不在是分别找到两个进行交换，而是把一个下标所指向的位置当作一个坑
+     * 不会产生重复交换的
      */
     private static int partition挖坑(int [] arr, int lowIndex, int highIndex) {
         int key = arr[lowIndex];
         int leftIndex = lowIndex;
         int rightIndex = highIndex;
         while (leftIndex < rightIndex){
-
+            while (leftIndex < rightIndex && arr[rightIndex] >= key){
+                rightIndex--;
+            }
+            //找到了之后，填入坑里面 -- 然后rightIndex就可以当作是一个坑
+            arr[leftIndex] = arr[rightIndex];
+            while (leftIndex < rightIndex && arr[leftIndex] <= key){
+                leftIndex++;
+            }
+            arr[rightIndex] = arr[leftIndex];
         }
+        //最后填入key leftIndex == rightIndex
+        arr[leftIndex] = key;
+        return leftIndex;
     }
+    /**
+     * 第三种方法
+     * 快慢指针
+     * 快指针：负责遍历整个数据
+     * 慢指针：保证慢指针左侧的全部数据都是小于等于key
+     * 当快指针遇到了比key小的，就和慢指针交换
+     */
+    private static int partition快慢(int [] arr, int lowIndex, int highIndex) {
+        int key = arr[lowIndex];
+        int seperate = lowIndex+1;//保证low左侧的都是小于等于key
+        for(int fast = lowIndex+1;fast <= highIndex;fast++){
+            //当前位置小于key 就执行交换的逻辑
+            if(arr[fast] <= key){ // 加上等号可以确保和key一样的放在前半段区间
+                swap(arr,seperate,fast);
+                seperate++;
+            } //如果比key大什么也不做，继续往后遍历就好了
+        }
+        swap(arr,lowIndex,seperate-1); //最后让key和分割指针的前一个交换即可
+        return seperate-1;
+    }
+
     /**
      * 堆排序
      * 对数据进行建大堆操作
